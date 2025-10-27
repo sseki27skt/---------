@@ -1,38 +1,40 @@
+/* 基本的なレイアウト */
 body {
     font-family: sans-serif;
-    margin: 20px;
     background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 20px;
 }
 
 h1 {
-    border-bottom: 2px solid #005B9A;
-    color: #333;
+    color: #111;
 }
 
-input[type="file"] {
-    margin: 20px 0;
-}
-
-#loading-status {
-    font-style: italic;
-    color: #555;
-    margin: 10px 0;
-}
-
-#score-container {
-    /* 楽譜がコンテナからはみ出さないように */
-    overflow-x: auto;
-    background-color: white;
+/* OSMDコンテナのスタイル */
+#osmd-container {
+    /* 楽譜がコンテナの幅に合わせて伸縮するようにします */
+    width: 100%; 
+    max-width: 1200px; /* 最大幅を指定 */
+    margin: 20px auto;
+    background-color: #ffffff;
     border: 1px solid #ccc;
-    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    /* 内部のSVGがはみ出ないように */
+    overflow: hidden; 
 }
 
-/* OSMDは小節ごとに <g class="vf-measure">...</g> というSVGグループを生成します。
-  (※将来のOSMDバージョンでクラス名が変わる可能性はあります)
-  
-  ここにカーソルをポインターに変更するスタイルを適用し、
-  インタラクティブであることをユーザーに示します。
-*/
-.vf-measure {
-    cursor: pointer;
+/* * 💡 ハイライトの核となるスタイル 
+ * OSMD 1.8.0以降で推奨される方法です。
+ * * マウスオーバー時に 'highlighted-measure' クラスが 
+ * 小節の <g> (グループ) タグに追加されます。
+ * * このセレクタは、その子孫にある 
+ * 'rect.vf-measure-background-layer' (小節の背景矩形) を
+ * ターゲットにしています。
+ */
+.highlighted-measure rect.vf-measure-background-layer {
+    fill: rgba(255, 230, 0, 0.6); /* 黄色・半透明 */
+    stroke: rgba(200, 180, 0, 0.8); /* 枠線（任意） */
+    stroke-width: 1px;
+    transition: fill 0.05s ease-in-out; /* わずかなアニメーション */
 }
