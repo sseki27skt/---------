@@ -37,9 +37,9 @@ fileInput.addEventListener("change", (event) => {
 
 
 /**
- * 楽譜を読み込み、分析し、描画するメイン関数
- * @param {string} musicxmlData - MusicXMLのファイル内容
- */
+     * 楽譜を読み込み、分析し、描画するメイン関数
+     * @param {string} musicxmlData - MusicXMLのファイル内容
+     */
 async function loadScore(musicxmlData) {
     loadingStatus.textContent = "楽譜を解析しています...";
 
@@ -51,16 +51,19 @@ async function loadScore(musicxmlData) {
         // 1. 楽譜データをOSMDに読み込ませる
         await osmd.load(musicxmlData);
 
-        // 2. 楽譜を分析してフィンガープリント・マップを作成 (★重要)
-        analyzeScore(osmd);
-
         loadingStatus.textContent = "楽譜を描画しています...";
 
-        // 3. 楽譜をSVGとして描画
-        // (注: render()は非同期ではない場合があるが、将来に備えawait)
+        // 2. ★修正★: 先に楽譜を描画する
+        // これにより、OSMDの内部データが完全に構築される
         await osmd.render();
 
-        // 4. 描画されたSVGにマウスイベントを登録 (★重要)
+        loadingStatus.textContent = "楽譜を分析しています...";
+
+        // 3. ★修正★: 描画後に分析を実行する
+        // これで createFingerprint が正しい値を取得できる
+        analyzeScore(osmd);
+
+        // 4. 描画されたSVGにマウスイベントを登録
         setupMouseEvents(osmd);
 
         loadingStatus.textContent = "読み込み完了。小節にマウスを乗せてください。";
