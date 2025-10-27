@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicXML 重複小節ハイライター</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>MusicXML 重複小節ハイライター</h1>
+    <p>
+        MusicXMLファイル（.xml, .musicxml）を読み込んでください。<br>
+        楽譜が描画されたら、小節の上にマウスカーソルを乗せると、同じパターンの小節が赤くハイライトされます。
+    </p>
+
+    <input type="file" id="file-input" accept=".xml, .musicxml">
+    
+    <div id="loading-status"></div>
+
+    <div id="score-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@latest/build/opensheetmusicdisplay.min.js"></script>
+
+    <script src="main.js"></script>
+</body>
+</html>

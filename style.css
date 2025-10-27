@@ -1,0 +1,38 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    border-bottom: 2px solid #005B9A;
+    color: #333;
+}
+
+input[type="file"] {
+    margin: 20px 0;
+}
+
+#loading-status {
+    font-style: italic;
+    color: #555;
+    margin: 10px 0;
+}
+
+#score-container {
+    /* 楽譜がコンテナからはみ出さないように */
+    overflow-x: auto;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+/* OSMDは小節ごとに <g class="vf-measure">...</g> というSVGグループを生成します。
+  (※将来のOSMDバージョンでクラス名が変わる可能性はあります)
+  
+  ここにカーソルをポインターに変更するスタイルを適用し、
+  インタラクティブであることをユーザーに示します。
+*/
+.vf-measure {
+    cursor: pointer;
+}
