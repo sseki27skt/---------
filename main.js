@@ -123,36 +123,40 @@ function analyzeScore(osmdInstance) {
  * @param {SourceMeasure} measure
  * @returns {string} この小節のフィンガープリント
  */
+/**
+     * [ステップ1のコア]
+     * 1つの小節 (SourceMeasure) から一意の「指紋」文字列を生成する
+     * @param {SourceMeasure} measure
+     * @returns {string} この小節のフィンガープリント
+     */
 function createFingerprint(measure) {
     let fingerprint = "";
 
-    // measure.staffEntries が null や undefined でないか確認
-    if (measure.staffEntries) {
-
-        for (const entry of measure.staffEntries) {
-
-            // entry.voiceEntries も同様に確認
-            if (entry.voiceEntries) {
-                for (const voice of entry.voiceEntries) {
-
-                    // voice.notes も同様に確認
-                    if (voice.notes) {
-                        for (const note of voice.notes) {
-                            if (note.isRest) {
-                                // ★ 修正: .toString() を使用
-                                fingerprint += `r:${note.Length.toString()};`; // 例: "r:1/4;"
-                            } else if (note.Pitch) {
-                                // ★ 修正: .toString() を使用
-                                // note.Pitch.FullnameString は "C#4" など
-                                // note.Length.toString() は "1/4" など
-                                fingerprint += `n:${note.Pitch.FullnameString}:${note.Length.toString()};`;
+    // ★ 修正: エラー特定のため try...catch を追加
+    try {
+        if (measure.staffEntries) {
+            for (const entry of measure.staffEntries) {
+                if (entry.voiceEntries) {
+                    for (const voice of entry.voiceEntries) {
+                        if (voice.notes) {
+                            for (const note of voice.notes) {
+                                if (note.isRest) {
+                                    fingerprint += `r:${note.Length.toString()};`;
+                                } else if (note.Pitch) {
+                                    fingerprint += `n:${note.Pitch.FullnameString}:${note.Length.toString()};`;
+                                }
                             }
                         }
                     }
                 }
+                fingerprint += "|"; // 垂直スライス間の区切り文字
             }
-            fingerprint += "|"; // 垂直スライス間の区切り文字
         }
+    } catch (e) {
+        // エラーが発生したらコンソールに出力し、
+        // 他と区別できる "ERROR" という指紋を返す
+        console.error(`Fingerprint generation error in measure ${measure.MeasureNumber}:`, e);
+        return `ERROR_${measure.MeasureNumber}`;
     }
 
     return fingerprint;
@@ -242,9 +246,16 @@ function handleMouseOut(measureNumber) {
      * @param {number[]} measureNumbers - 色を変えたい小節番号の配列
      * @param {string | null} color - "red" などのCSS色。nullの場合はデフォルト色(黒)に戻す
      */
+/**
+     * [ステップ3: 動的ハイライト - 実行部]
+     * 指定された小節番号リストの「音符の色」を変更する
+     * @param {number[]} measureNumbers - 色を変えたい小節番号の配列
+     * @param {string | null} color - "red" などのCSS色。nullの場合はデフォルト色(黒)に戻す
+     */
 function highlightMeasures(measureNumbers, color) {
     const defaultColor = "#000000"; // OSMDのデフォルトは黒
     const targetColor = color || defaultColor;
+    let needsRedraw = false;
 
     for (const measure of osmd.sheet.SourceMeasures) {
         if (measureNumbers.includes(measure.MeasureNumber)) {
@@ -254,25 +265,17 @@ function highlightMeasures(measureNumbers, color) {
 
             graphicalMeasure.staffEntries.forEach(gStaffEntry => {
                 gStaffEntry.graphicalNotes.forEach(gNote => {
-
-                    // ★ 修正: OSMDの公式メソッド setColour を使用
-                    // これにより符頭、符幹、符尾がすべて色付けされる
+                    // OSMDの公式メソッド setColour を使用
                     gNote.setColour(targetColor);
-
-                    // setColour は自動で再描画しないため、
-                    // 関連するSVG要素のスタイルを直接変更する
-                    if (gNote.svgElement) {
-                        gNote.svgElement.style.fill = targetColor;
-                    }
+                    needsRedraw = true;
                 });
             });
         }
     }
 
-    // ★ 追加: 変更をSVGに即時反映させる
-    // (setColourだけでは描画が変わらない場合があるため)
-    // ただし、この方法は重い可能性があるので、まずは setColour と
-    // svgElement.style.fill だけで試し、ダメなら osmd.render() を使う
-
-    // osmd.render(); // <- これを呼ぶと確実だが、遅くなる
+    // ★ 修正: 変更を反映するために再描画を実行
+    // (osmd.render() は全体を再計算するので遅いが、osmd.draw() は高速)
+    if (needsRedraw) {
+        osmd.draw();
+    }
 }
