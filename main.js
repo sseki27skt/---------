@@ -135,36 +135,79 @@ function analyzeScore(osmdInstance) {
 function createFingerprint(measure) {
     let fingerprint = "";
 
-    // ★ 修正: エラー特定のため try...catch を追加
+    // ★ デバッグ用: 1小節目だけ詳細ログを出す
+    const isDebugMeasure = (measure.MeasureNumber === 1);
+    if (isDebugMeasure) {
+        console.log(`--- Debugging Measure ${measure.MeasureNumber} ---`);
+    }
+
     try {
-        if (measure.staffEntries) {
-            for (const entry of measure.staffEntries) {
-                if (entry.voiceEntries) {
-                    for (const voice of entry.voiceEntries) {
-                        if (voice.notes) {
-                            for (const note of voice.notes) {
-                                if (note.isRest) {
-                                    fingerprint += `r:${note.Length.toString()};`;
-                                } else if (note.Pitch) {
-                                    fingerprint += `n:${note.Pitch.FullnameString}:${note.Length.toString()};`;
-                                }
-                            }
-                        }
+        // staffEntries が存在するかチェック
+        if (!measure.staffEntries) {
+            if (isDebugMeasure) console.log("Debug: measure.staffEntries is null/undefined. (空の小節)");
+            return ""; // 空の小節
+        }
+
+        if (isDebugMeasure) console.log(`Debug: Found ${measure.staffEntries.length} staffEntries.`);
+
+        for (const entry of measure.staffEntries) {
+            // voiceEntries が存在するかチェック
+            if (!entry.voiceEntries) {
+                if (isDebugMeasure) console.log("Debug: entry.voiceEntries is null/undefined.");
+                continue; // 次の StaffEntry へ
+            }
+
+            for (const voice of entry.voiceEntries) {
+                // notes が存在するかチェック
+                if (!voice.notes) {
+                    if (isDebugMeasure) console.log("Debug: voice.notes is null/undefined.");
+                    continue; // 次の VoiceEntry へ
+                }
+
+                for (const note of voice.notes) {
+                    // ★ 最重要ログ: note オブジェクトの中身をそのまま出力
+                    if (isDebugMeasure) {
+                        console.log("Debug: Processing Note object:", note);
+                    }
+
+                    // note オブジェクトと Length プロパティが存在するかチェック
+                    if (!note || !note.Length) {
+                        if (isDebugMeasure) console.log("Debug: Note or Note.Length is null/undefined.");
+                        continue; // 次の Note へ
+                    }
+
+                    const duration = note.Length.toString(); // "1/4" など
+
+                    if (note.isRest) {
+                        // 休符
+                        fingerprint += `r:${duration};`;
+                        if (isDebugMeasure) console.log(`Debug: Found Rest, duration: ${duration}`);
+                    } else if (note.Pitch) {
+                        // 音符
+                        const pitch = note.Pitch.FullnameString; // "C#4" など
+                        fingerprint += `n:${pitch}:${duration};`;
+                        if (isDebugMeasure) console.log(`Debug: Found Note, pitch: ${pitch}, duration: ${duration}`);
+                    } else {
+                        // ピッチがない音符 (パーカッションなど)
+                        fingerprint += `u:${duration};`; // 'u' for unpitched
+                        if (isDebugMeasure) console.log(`Debug: Found Unpitched Note, duration: ${duration}`);
                     }
                 }
-                fingerprint += "|"; // 垂直スライス間の区切り文字
             }
+            fingerprint += "|"; // 垂直スライス間の区切り文字
         }
     } catch (e) {
-        // エラーが発生したらコンソールに出力し、
-        // 他と区別できる "ERROR" という指紋を返す
+        // try...catch で万が一のエラーを捕捉
         console.error(`Fingerprint generation error in measure ${measure.MeasureNumber}:`, e);
         return `ERROR_${measure.MeasureNumber}`;
     }
 
+    // 1小節目の最終的なフィンガープリントを出力
+    if (isDebugMeasure) {
+        console.log(`--- Debug Measure 1 Result (Fingerprint): "${fingerprint}" ---`);
+    }
     return fingerprint;
 }
-
 
 /**
  * [ステップ2: イベント登録]
